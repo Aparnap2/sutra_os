@@ -3,7 +3,11 @@
 //! This crate provides the types and macros used by actor authors.
 //! Compile with `--target wasm32-wasip1` (WASI 0.1) or `wasm32-wasip2` (WASI 0.2).
 
+#![no_std]
+
+extern crate alloc;
+
 pub mod types;
 pub mod macros;
 
-pub use types::{ActorEvent, ActorResult, NyayaProofBuilder};
+pub use types::{ActorEvent, ActorResult, CausalProofBuilder};

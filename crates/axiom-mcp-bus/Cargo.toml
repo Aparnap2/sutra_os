@@ -1,0 +1,17 @@
+[package]
+name    = "axiom-mcp-bus"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Universal Kernel MCP Host Multiplexer (JSON-RPC 2.0)"
+
+[dependencies]
+tokio        = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+thiserror    = { workspace = true }
+anyhow       = { workspace = true }
+tracing      = { workspace = true }
+reqwest      = { workspace = true }
+axiom-verify  = { path = "../axiom-verify" }
+axiom-gitvfs = { path = "../axiom-gitvfs" }

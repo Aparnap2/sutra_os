@@ -136,6 +136,119 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
+name = "axiom-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axiom-compile",
+ "axiom-gitvfs",
+ "axiom-kerneld",
+ "axiom-verify",
+ "axiom-wasm-host",
+ "clap",
+ "git2",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "axiom-compile"
+version = "0.1.0"
+dependencies = [
+ "axiom-verify",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.21",
+ "toml",
+ "tracing",
+]
+
+[[package]]
+name = "axiom-gitvfs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axiom-verify",
+ "git2",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.21",
+ "tracing",
+ "ulid",
+]
+
+[[package]]
+name = "axiom-kerneld"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axiom-compile",
+ "axiom-gitvfs",
+ "axiom-verify",
+ "axiom-wasm-host",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "ulid",
+]
+
+[[package]]
+name = "axiom-mcp-bus"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axiom-gitvfs",
+ "axiom-verify",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "axiom-verify"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
+name = "axiom-wasm-host"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axiom-compile",
+ "axiom-gitvfs",
+ "axiom-verify",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "wasmtime",
+ "wasmtime-wasi",
+]
+
+[[package]]
 name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -166,16 +279,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
 dependencies = [
  "generic-array",
-]
-
-[[package]]
-name = "bstr"
-version = "1.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bb31b46c14244e20ee9984b11bf5c992b91fb6939fea616e3512c8baecdbe5f"
-dependencies = [
- "memchr",
- "serde_core",
 ]
 
 [[package]]
@@ -890,19 +993,6 @@ dependencies = [
  "libgit2-sys",
  "log",
  "url",
-]
-
-[[package]]
-name = "globset"
-version = "0.4.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07c34a9410465b45bd9787443bc7370f37735bad04b0f0cd57ff1a3186c98988"
-dependencies = [
- "aho-corasick",
- "bstr",
- "log",
- "regex-automata",
- "regex-syntax",
 ]
 
 [[package]]
@@ -1865,14 +1955,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-actor-sdk"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "rustc-demangle"
 version = "0.1.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2152,101 +2234,6 @@ name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
-
-[[package]]
-name = "sutra-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "serde",
- "serde_json",
- "sutra-gitvfs",
- "sutra-kerneld",
- "sutra-nyaya",
- "sutra-panini",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "sutra-gitvfs"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "git2",
- "hex",
- "serde",
- "serde_json",
- "sha2",
- "sutra-nyaya",
- "thiserror 2.0.21",
- "tracing",
- "ulid",
-]
-
-[[package]]
-name = "sutra-kerneld"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "serde_json",
- "sutra-gitvfs",
- "sutra-nyaya",
- "sutra-panini",
- "sutra-wasm-host",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "ulid",
-]
-
-[[package]]
-name = "sutra-nyaya"
-version = "0.1.0"
-dependencies = [
- "hex",
- "serde",
- "serde_json",
- "sha2",
- "thiserror 2.0.21",
- "tracing",
-]
-
-[[package]]
-name = "sutra-panini"
-version = "0.1.0"
-dependencies = [
- "globset",
- "serde",
- "serde_json",
- "sutra-nyaya",
- "thiserror 2.0.21",
- "toml",
- "tracing",
-]
-
-[[package]]
-name = "sutra-wasm-host"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "reqwest",
- "serde",
- "serde_json",
- "sutra-gitvfs",
- "sutra-nyaya",
- "sutra-panini",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
- "wasmtime",
- "wasmtime-wasi",
-]
 
 [[package]]
 name = "syn"

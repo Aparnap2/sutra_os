@@ -15,11 +15,9 @@ pub struct ActorEvent {
 /// Result type returned by an actor's `on_interrupt`.
 pub type ActorResult<T> = Result<T, alloc::string::String>;
 
-extern crate alloc;
-
-/// Builder for constructing a `NyayaCommitProof` from within a Wasm actor.
+/// Builder for constructing a `CausalProof` from within a Wasm actor.
 #[derive(Default)]
-pub struct NyayaProofBuilder {
+pub struct CausalProofBuilder {
     pratijna_branch: alloc::string::String,
     hetu_evidence_shas: alloc::vec::Vec<alloc::string::String>,
     udaharana_runbook_id: alloc::string::String,
@@ -27,7 +25,7 @@ pub struct NyayaProofBuilder {
     nigamana_verify_cmd: alloc::string::String,
 }
 
-impl NyayaProofBuilder {
+impl CausalProofBuilder {
     pub fn new() -> Self { Self::default() }
 
     pub fn pratijna(mut self, branch: impl Into<alloc::string::String>) -> Self {

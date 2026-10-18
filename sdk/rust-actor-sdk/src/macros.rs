@@ -4,25 +4,25 @@
 ///
 /// # Example
 /// ```ignore
-/// sutra_actor_main!(my_on_interrupt);
+/// axiom_actor_main!(my_on_interrupt);
 ///
 /// fn my_on_interrupt(event_json: &str) -> Result<String, String> {
 ///     // ... build and return NyayaProof JSON
 /// }
 /// ```
 #[macro_export]
-macro_rules! sutra_actor_main {
+macro_rules! axiom_actor_main {
     ($handler:ident) => {
         #[no_mangle]
         pub extern "C" fn on_interrupt(ptr: *const u8, len: usize) -> *mut u8 {
-            let json = unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(ptr, len)) };
+            let json = unsafe { core::str::from_utf8_unchecked(core::slice::from_raw_parts(ptr, len)) };
             let result = $handler(json);
             let out = match result {
                 Ok(s) => s,
-                Err(e) => format!("{{\"error\":\"{}\"}}", e),
+                Err(e) => alloc::format!("{{\"error\":\"{}\"}}", e),
             };
             let boxed = out.into_bytes().into_boxed_slice();
-            Box::into_raw(boxed) as *mut u8
+            alloc::boxed::Box::into_raw(boxed) as *mut u8
         }
     };
 }

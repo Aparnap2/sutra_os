@@ -22,11 +22,10 @@ interface syscalls {
     /// A Navya-Nyāya 5-member commit proof submitted by the actor.
     record nyaya-proof {
         pratijna-branch: string,
-        hetu-evidence-shas: list<string>,
-        udaharana-runbook-id: string,
-        /// List of node IDs whose Catuṣkoṭi state was verified as Asti.
-        upadhi-nodes-cleared: list<string>,
-        nigamana-verify-cmd: string,
+        hetu-resource-shas: list<string>,
+        udaharana-sutra-id: string,
+        upadhi-cleared-uris: list<string>,
+        nigamana-postcondition: string,
     }
 
     /// Read raw bytes from the Git VFS at the given path.
@@ -45,6 +44,12 @@ interface syscalls {
     /// Perform an outbound HTTP GET via the Phantom Credential Proxy.
     /// `secret-placeholder` is substituted with the real host credential.
     sys-http-phantom-get: func(url: string, secret-placeholder: string) -> result<string, string>;
+
+    /// Read an MCP resource by server name and URI.
+    mcp-read-resource: func(server-name: string, uri: string) -> result<string, string>;
+
+    /// Invoke an MCP tool.
+    mcp-invoke-tool: func(server-name: string, tool-name: string, args-json: string) -> result<string, string>;
 }
 
 /// The SūtraOS actor world.

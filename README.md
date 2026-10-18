@@ -1,327 +1,197 @@
-# 🕉 SūtraOS v1 — `sutra-kerneld`
+# AxiomOS v1 — Pure Platform
 
-> **AI-Native Headless Operating System Kernel for 24×7 Autonomous DevOps Self-Healing**
+> **AI-Native Headless OS Kernel where MCP is the Universal I/O Bus**
 >
-> _Where Ancient Indian Mathematical Logic Meets Systems Programming_
+> _No hardcoded connectors. A machine-checked causal proof gates every mutation._
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.93%2B-orange.svg)](https://www.rust-lang.org)
-[![Architecture](https://img.shields.io/badge/arch-Rust%20%2B%20WASM%20%2B%20Git-purple.svg)]()
 
 ---
 
-## What Is SūtraOS?
+## What Is AxiomOS?
 
-SūtraOS inverts the conventional "LLM as outer loop" paradigm. Instead of a Python prompt loop calling tools forever, SūtraOS is a **deterministic Rust kernel** where the LLM is a restricted **system call** (`sys_llm_infer`) — just like `write()` or `mmap()` in a POSIX kernel.
+AxiomOS is a **deterministic Rust kernel** where the LLM is a restricted system call (`sys_llm_infer`) and **all external I/O flows through MCP**. There are no hardcoded connectors — every capability is an MCP server mounted by the kernel. Agents sleep at zero token cost, wake on MCP notifications, stage mutations on Git branches, and must pass a machine-checked **causal proof** before merge.
 
 ```
-                ┌─────────────────────────────────────────────┐
-                │          SūtraOS Kernel (Rust)              │
-                │                                             │
-  Prometheus ──►│  Catuṣkoṭi    Git VFS      Nyāya Gate      │──► Infra
-  journald  ──►│  State Update  Frame Branch  Proof Verify   │    (GitOps)
-  cron      ──►│       │            │              │          │
-                │       ▼            ▼              ▼          │
-                │    [Wasmtime Actor Host]                     │
-                │       │                                     │
-                │       └──► sys_llm_infer() ──► LLM API     │
-                └─────────────────────────────────────────────┘
+                  ┌──────────────────────────────────────────────┐
+                  │          AxiomOS Kernel (Rust)               │
+                  │                                              │
+    MCP servers ──►│  MCP Bus  Git VFS  Causal Gate  HealthState │──► Infra
+    (stdio/SSE)   │     │       │         │           │          │    (GitOps)
+                  │     ▼       ▼         ▼           ▼          │
+                  │              [Wasmtime Actor Host]           │
+                  │                    │                         │
+                  │                    └──► sys_llm_infer()      │
+                  └──────────────────────────────────────────────┘
 ```
-
-**95% of execution uses 0 LLM tokens.** Agents sleep at zero cost, wake on hardware interrupts, and only call the LLM when they encounter an unknown anomaly.
 
 ---
 
-## Mathematical Foundation
+## Mathematical Foundation (origins of the algorithms)
 
-SūtraOS is powered by five formal systems from Ancient Indian mathematics — not as a gimmick, but because these 2,500-year-old frameworks **literally solve** the key problems of modern AI agent design:
-
-| Classical Indian System | Mathematical Concept | SūtraOS Application |
-|------------------------|---------------------|-------------------|
-| **Pāṇini's *Aṣṭādhyāyī*** (c. 500 BCE) | *Anuvṛtti* (Context Inheritance) + *Pratyāhāra* (Algebraic Compression) | Context compression for LLM syscalls. Sends only **deltas** + parent hash instead of full 20K-token context dumps |
-| **Gangeśa's *Navya-Nyāya*** (13th C.) | 5-Step *Pañcāvayava* Syllogism + *Upādhi* Defeater Detection | **Root-Cause Analysis Gate** — every agent merge requires a machine-checked 5-part causal proof. Prevents confusing correlation with causation during outages |
-| **Jain *Syādvāda / Catuṣkoṭi*** | 4-Valued Epistemic Logic (`Asti`, `Nāsti`, `Ubhaya`, `Avaktavya`) | **Distributed State Machine** — forbids destructive mutation when a node is unobservable (instead of crashing with `false == false` booleans) |
-| **Piṅgala's *Chandaḥśāstra*** (c. 200 BCE) | Binary Combinatorial Enumeration (*Meru Prastāra*) | **O(1) Loop Detection** — detects repeating agent action cycles using 64-bit rolling register, no vector embeddings needed |
-| **Āryabhaṭa's *Kuṭṭaka*** (499 CE) | Extended Euclidean Modular Solver (`ax + by = c`) | **Zero-Thundering-Herd Scheduler** — assigns coprime jitter offsets to thousands of health probes so they never collide on I/O |
+| Classical System | Concept | AxiomOS Application |
+|---|---|---|
+| Pāṇini's *Aṣṭādhyāyī* | *Anuvṛtti* + *Pratyāhāra* | Context compression (`ContextDelta`); capability spans (`CapabilitySpan`) |
+| Navya-Nyāya (Gangeśa) | 5-step *Pañcāvayava* + *Upādhi* | Root-cause merge gate (`CausalProof`) |
+| Jain *Catuṣkoṭi* | 4-valued logic (`Asti`/`Nāsti`/`Ubhaya`/`Avaktavya`) | Distributed state (`HealthState`: Healthy/Faulted/Flapping/Unobservable); blindspot lock |
+| Piṅgala | Binary combinatorial enumeration | O(1) loop/MCP-tool-cycle detection (`CycleDetector`) |
+| Āryabhaṭa *Kuṭṭaka* | Extended Euclidean solver | Zero-thundering-herd scheduling (`JitterScheduler`) |
 
 ---
 
 ## Architecture
 
-### Pillar 1 — Hybrid Executable (`.sutra` manifest + `.wasm` actor)
+### MCP as Universal I/O Bus
 
-Every agent is a two-part bundle:
+- **Semantic Layer (Nouns):** MCP `resources/*` mirrored into Git VFS at `/state/mcp/<server>/resources/`, typed as health-state nodes.
+- **Kinetic Layer (Verbs):** MCP `tools/*` staged in a transactional outbox on the frame branch; dispatched only after the causal proof passes.
+- **Secrets:** injected into MCP server env by the kernel; Wasm/LLM never see raw keys.
+- **Unobservable:** MCP server disconnect → all its resource nodes become `Unobservable`; destructive mutations rejected.
+- **Wakeup:** `notifications/resources/updated` wakes hibernated actors.
 
-```toml
-# agent.sutra — The Pāṇinian Declarative Envelope
-name = "k8s-oom-healer"
-actor_wasm_path = "actor.wasm"
-nigamana_cmd = "kubectl get pod auth-service | grep Running"
+### Hybrid Executable (`.axiom` + `.wasm`)
 
-[[nimitta]]          # Wakeup trigger
-kind = "prometheus_alert"
-alert_name = "KubePodOOMKilling"
+Declarative manifest + deterministic Wasm actor. LLM only via `sys_llm_infer`. New syscalls: `mcp-read-resource`, `mcp-invoke-tool`.
 
-[[adhikara]]         # VFS permissions (Adhikāra = jurisdiction)
-path_glob = "/ontology/nodes/k8s/**"
-read = true
-write = false
-```
+### Git-Native Merkle VFS
+
+Embedded bare Git repo (`gix`). Speculative frame branches. MCP resource snapshots + outbox entries are Git blobs.
+
+### Causal Merge Gate
 
 ```rust
-// actor.wasm — The Deterministic Procedural Body
-// 95% execution: pure Wasm, 0 LLM tokens
-// 5% execution: trapped into kernel via typed syscall
-let diagnosis: NyayaRootCause = host_kernel::sys_llm_infer(
-    ModelTier::System2Frontier,
-    &anuvritti_compressed_context,   // Delta-only context
-    Schema::NyayaSyllogism,          // Schema-constrained output
-)?;
-```
-
-### Pillar 2 — Git-Native Merkle VFS
-
-Every state mutation is a Git commit on an isolated branch:
-
-```
-state.git/
-├── refs/heads/main          ← Verified production truth
-├── refs/heads/frame/...     ← Speculative agent branches
-└── objects/
-    ├── ontology/nodes/      ← Catuṣkoṭi-typed infrastructure nodes
-    ├── runbooks/sutra/      ← Verified causal invariants (REM memory)
-    ├── incidents/           ← Active incident timelines
-    └── ledger/wal/          ← Cryptographically-signed action ledger
-```
-
-### Pillar 3 — Navya-Nyāya Merge Gate
-
-**No agent can merge into `main` without proving causation** (not just correlation):
-
-```rust
-pub struct NyayaCommitProof {
-    pub pratijna_branch: String,          // 1. Proposed action
-    pub hetu_evidence_shas: Vec<String>,  // 2. Cryptographic evidence hashes
-    pub udaharana_runbook_id: String,     // 3. Vyāpti causal rule reference
-    pub upadhi_confounders_cleared: Vec<(String, CatuskotiState)>, // 4. Defeaters ruled out
-    pub nigamana_verify_cmd: String,      // 5. Post-merge canary command
+pub struct CausalProof {
+    pub proposed_branch: String,
+    pub evidence_blob_shas: Vec<String>,
+    pub policy_rule_id: String,
+    pub verified_dependencies: Vec<String>,
+    pub postcondition_check: String,
 }
 ```
 
 ---
 
-## Workspace Structure
+## Workspace
 
 ```
-sutra-os/
-├── Cargo.toml                     # Rust Workspace (resolver = "2")
-├── wit/
-│   └── sutra-syscall.wit          # WIT / WASI 0.2 Actor ABI
+axiom-os/
+├── Cargo.toml
+├── wit/axiom-syscall.wit
 ├── crates/
-│   ├── sutra-nyaya/               # Epistemic logic & classical math engine
-│   │   ├── src/catuskoti.rs       # 4-valued lattice (join/meet/flap)
-│   │   ├── src/kuttaka.rs         # Extended Euclidean jitter scheduler
-│   │   ├── src/pingala.rs         # O(1) trajectory cycle watchdog
-│   │   └── src/syllogism.rs       # 5-step Nyāya proof verifier
-│   ├── sutra-panini/              # Pāṇinian manifest & context engine
-│   │   ├── src/manifest.rs        # .sutra TOML parser
-│   │   ├── src/pratyahara.rs      # 16-bit capability bitpacker
-│   │   └── src/anuvritti.rs       # Context delta inheritance
-│   ├── sutra-gitvfs/              # Transactional Git Merkle VFS
-│   │   ├── src/repository.rs      # Bare Git repo management
-│   │   ├── src/node.rs            # InfraNode typed resource
-│   │   └── src/transaction.rs     # Frame begin/commit/rollback
-│   ├── sutra-wasm-host/           # Wasmtime actor host
-│   │   ├── src/host.rs            # ActorHost + fuel metering
-│   │   ├── src/llm.rs             # LlmBackend trait (Mock + HTTP)
-│   │   └── src/phantom.rs         # Phantom credential proxy
-│   ├── sutra-kerneld/             # Core kernel (binary: sutra-kerneld)
-│   │   ├── src/kernel.rs          # SutraKernel event pipeline
-│   │   ├── src/reactor.rs         # TelemetryEvent types
-│   │   ├── src/scheduler.rs       # KuttakaScheduler probe registration
-│   │   └── src/rem.rs             # REM memory compactor
-│   └── sutra-cli/                 # CLI binary: sutra
-│       └── src/commands/          # init / trigger / audit / status
-├── sdk/
-│   └── rust-actor-sdk/            # no_std crate for .wasm actor authors
-├── stdlib-agents/                 # Built-in 24×7 DevOps agents
-│   ├── k8s-oom-healer/            # Kubernetes OOM crash-loop healer
-│   ├── tls-dns-sentinel/          # TLS certificate & DNS self-healing
-│   └── pg-lock-surgeon/           # PostgreSQL deadlock remediation
-└── examples/
-    └── oom-trigger.event.json     # Sample trigger event
+│   ├── axiom-verify/
+│   ├── axiom-compile/
+│   ├── axiom-gitvfs/
+│   ├── axiom-mcp-bus/        # NEW: MCP host multiplexer
+│   ├── axiom-wasm-host/
+│   ├── axiom-kerneld/
+│   └── axiom-cli/
+├── sdk/rust-actor-sdk/
+└── examples/oom-trigger.event.json
 ```
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| **Core Language** | Rust 2021 + `tokio` | Memory-safe, fearless concurrency, compiles to single static binary |
-| **Wasm Runtime** | `wasmtime 27` (WASI 0.1) | Sub-millisecond cold starts, fuel metering, capability-based security |
-| **Git VFS** | `git2` (libgit2 bindings) | Transactional state management with full history and cryptographic integrity |
-| **Logic Engine** | Pure Rust (Nyāya, Catuṣkoṭi) | Datalog-equivalent horn-clause inference in native code |
-| **LLM Bridge** | `reqwest` + JSON schema | Grammar-constrained structured outputs, multi-backend (OpenAI/Anthropic/Ollama) |
-| **Secrets** | Phantom Proxy (in-process) | Wasm guest never sees credentials — substituted in-flight by the kernel |
+| Layer | Technology |
+|---|---|
+| Language | Rust **2024**, tokio |
+| Wasm | `wasmtime 49.0.3+` (WASI 0.2) |
+| Git VFS | `gix 0.89` (`max-performance-safe`) |
+| MCP Bus | `axiom-mcp-bus` (JSON-RPC 2.0, stdio + HTTP/SSE) |
+| Workspace | resolver = **3** |
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-
 - Rust 1.93+ (`rustup update stable`)
-- `libgit2` system library (`apt install libgit2-dev` or `brew install libgit2`)
 
 ### Build
-
 ```bash
 git clone https://github.com/Aparnap2/sutra_os.git
 cd sutra_os
 cargo build --workspace
 ```
 
-### Initialise a State Repository
-
+### Initialise State Repo
 ```bash
-cargo run -p sutra-cli -- init ./my-state.git
+cargo run -p axiom-cli -- init ./state.git
 ```
 
-Output:
-```
-🕉  SūtraOS — Initialising state repository at: ./my-state.git
-✅ Initialised SūtraOS state repository
-   Nodes seeded: k8s-worker-1, aws-us-east-1, pg-primary, auth-service
-   Runbooks: runbook-oom-restart-v1
-```
-
-### Show Node States
-
+### Mount an MCP Server
 ```bash
-cargo run -p sutra-cli -- status --repo ./my-state.git
+cargo run -p axiom-cli -- mcp mount kubernetes --transport stdio --command mcp-server-kubernetes
 ```
 
-Output:
-```
-🕉  SūtraOS Status — Node Catuṣkoṭi States
-   Node ID                        Catuṣkoṭi State
-   ──────────────────────────────────────────────────────────────
-   k8s-worker-1                   ✅ Asti (Healthy)
-   aws-us-east-1                  ✅ Asti (Healthy)
-   pg-primary                     ✅ Asti (Healthy)
-   auth-service                   ✅ Asti (Healthy)
-```
-
-### Audit Nyāya Proof History
-
+### Run Daemon
 ```bash
-cargo run -p sutra-cli -- audit --repo ./my-state.git
+cargo run -p axiom-cli -- daemon
 ```
 
-### Fire a Simulated OOM Event
-
+### Status / Audit / Trigger
 ```bash
-cargo run -p sutra-cli -- trigger examples/oom-trigger.event.json
-```
-
-### Run the Kernel Daemon
-
-```bash
-cargo run -p sutra-kerneld
+cargo run -p axiom-cli -- status --repo ./state.git
+cargo run -p axiom-cli -- audit --repo ./state.git
+cargo run -p axiom-cli -- trigger examples/oom-trigger.event.json
 ```
 
 ---
 
-## The Four Catuṣkoṭi States
+## `axiom.toml` Example
 
-| State | Sanskrit | Meaning | Mutation Policy |
-|-------|----------|---------|----------------|
-| `Asti` | अस्ति | Deterministically Healthy | ✅ All mutations allowed |
-| `Nasti` | नास्ति | Deterministically Faulted | ✅ Remediation allowed |
-| `Ubhaya` | उभय | Flapping / Byzantine | ⚠️ Non-destructive only |
-| `Avaktavya` | अवक्तव्य | Unobservable / Blindspot | 🔒 **All mutations FORBIDDEN** |
+```toml
+[platform]
+edition = "2024"
+state_repo = "./state.git"
 
----
+[[mcp.mount]]
+name = "kubernetes"
+transport = "stdio"
+command = "mcp-server-kubernetes"
 
-## Nyāya Commit Proof Example
+[[mcp.mount]]
+name = "github"
+transport = "http-sse"
+url = "https://mcp.github.com/sse"
+secret_placeholders = ["GITHUB_TOKEN"]
 
-Every merge into `main` requires:
-
-```json
-{
-  "pratijna_branch": "exec/inc-8841-oom-healer",
-  "hetu_evidence_shas": ["abc123def456..."],
-  "udaharana_runbook_id": "runbook-oom-restart-v1",
-  "upadhi_confounders_cleared": [
-    ["aws-us-east-1", "Asti"],
-    ["pg-primary", "Asti"]
-  ],
-  "nigamana_verify_cmd": "kubectl get pod auth-service | grep Running"
-}
+[budget]
+max_tokens_per_frame = 4096
 ```
 
-The kernel verifies:
-1. `pratijna` is non-empty
-2. All `hetu` evidence SHA blobs exist in the Git VFS
-3. The `udaharana` runbook rule ID is valid
-4. Every `upadhi` confounder is confirmed `Asti` (ruling out upstream outages)
-5. `nigamana` canary command returns exit code `0`
+---
+
+## The Four Health States
+
+| State | Meaning | Mutation Policy |
+|---|---|---|
+| `Healthy` | Healthy | ✅ All allowed |
+| `Faulted` | Faulted | ✅ Remediation allowed |
+| `Flapping` | Flapping/Byzantine | ⚠️ Non-destructive only |
+| `Unobservable` | Unobservable (incl. MCP disconnect) | 🔒 All forbidden |
 
 ---
 
-## Roadmap
+## Milestone Test Scenarios (E2E, mock MCP server over stdio)
 
-### v1.0 (Current)
-- [x] Catuṣkoṭi 4-valued state lattice
-- [x] Kuṭṭaka jitter scheduler
-- [x] Piṅgala O(1) cycle watchdog
-- [x] Navya-Nyāya 5-step proof verifier
-- [x] Pāṇinian manifest parser (`.sutra` TOML)
-- [x] Pratyāhāra 16-bit capability bitpacker
-- [x] Anuvṛtti context differential engine
-- [x] Git-native transactional VFS (`sutra-gitvfs`)
-- [x] Wasmtime actor host with fuel metering
-- [x] Phantom credential proxy
-- [x] CLI: `init`, `trigger`, `audit`, `status`
-- [x] stdlib agents: k8s-oom-healer, tls-dns-sentinel, pg-lock-surgeon
-
-### v1.1 (Next)
-- [ ] WASI 0.2 Component Model ABI (WIT-generated bindings)
-- [ ] eBPF telemetry ingestion via `aya`
-- [ ] Prometheus + Alertmanager webhook receiver
-- [ ] Real Wasm actor compilation pipeline
-- [ ] Parallel multi-agent racing on incident branches
-- [ ] `tantivy` + `usearch` embedded REM memory index
-
-### v2.0 (Future)
-- [ ] Multi-tenant kernel with namespace isolation
-- [ ] Bhāskara's *Cakravāla* for fleet-wide scheduling
-- [ ] Distributed Git VFS (CRDTs over gossip)
-- [ ] OpenTelemetry trace export
+1. **Happy path:** MCP resource reports `Faulted`; actor stages remediation tool call; proof clears upstream URIs as `Healthy`; dispatch succeeds; merge to `main`.
+2. **Unobservable hold:** MCP server disconnects mid-frame → resource nodes become `Unobservable` → commit rejected with `EpistemicBlindspotHold`; `main` untouched.
+3. **Cycle termination:** actor repeats identical MCP tool call 3× → `CycleDetected` → branch rolled back.
 
 ---
 
 ## Contributing
 
-SūtraOS is open-source under Apache-2.0. Contributions welcome!
-
 ```bash
-git clone https://github.com/Aparnap2/sutra_os.git
-cd sutra_os
-cargo check --workspace   # Must pass with zero errors
-cargo test --workspace    # Run the test suite
+cargo check --workspace
+cargo test --workspace
 ```
 
-Please read [AGENTS.md](AGENTS.md) for the architectural specification and coding standards.
+Read [AGENTS.md](AGENTS.md) for the build specification.
 
 ---
 
-## License
-
-Apache License 2.0 — see [LICENSE](LICENSE) for details.
-
----
-
-*"सूत्राणां च प्रयोजनम् — The purpose of sūtras is concision."*  
-*— Pāṇini, Aṣṭādhyāyī*
+_"The purpose of axioms is concision."_ — inspired by Pāṇini's Aṣṭādhyāyī
