@@ -1,0 +1,60 @@
+package sutra:kernel@0.1.0;
+
+/// SūtraOS kernel syscall interface (WIT / WASI 0.2 Component Model ABI).
+///
+/// This interface is imported by all SūtraOS `.wasm` actor components.
+/// The host (`sutra-wasm-host`) implements all functions.
+interface syscalls {
+
+    /// LLM inference request (the `sys-llm-infer` syscall).
+    ///
+    /// The actor calls this ONLY when deterministic Wasm logic is insufficient.
+    /// The kernel enforces FinOps budget and updates the Piṅgala watchdog.
+    record llm-request {
+        /// Model tier: 0=local, 1=mid, 2=frontier.
+        system-tier: u8,
+        /// Anuvṛtti-compressed context JSON (delta only, not full state).
+        anuvritti-context-json: string,
+        /// JSON Schema the response MUST conform to (grammar-constrained output).
+        response-schema-json: string,
+    }
+
+    /// A Navya-Nyāya 5-member commit proof submitted by the actor.
+    record nyaya-proof {
+        pratijna-branch: string,
+        hetu-evidence-shas: list<string>,
+        udaharana-runbook-id: string,
+        /// List of node IDs whose Catuṣkoṭi state was verified as Asti.
+        upadhi-nodes-cleared: list<string>,
+        nigamana-verify-cmd: string,
+    }
+
+    /// Read raw bytes from the Git VFS at the given path.
+    /// Enforces Adhikāra read-glob permissions.
+    vfs-read: func(path: string) -> result<list<u8>, string>;
+
+    /// Stage a VFS write on the current execution frame branch.
+    /// Enforces Adhikāra write-glob permissions.
+    /// Returns the new blob SHA-256 hash.
+    vfs-stage-write: func(path: string, data: list<u8>) -> result<string, string>;
+
+    /// Invoke the LLM as a typed syscall.
+    /// Returns structured JSON conforming to response-schema-json.
+    sys-llm-infer: func(req: llm-request) -> result<string, string>;
+
+    /// Perform an outbound HTTP GET via the Phantom Credential Proxy.
+    /// `secret-placeholder` is substituted with the real host credential.
+    sys-http-phantom-get: func(url: string, secret-placeholder: string) -> result<string, string>;
+}
+
+/// The SūtraOS actor world.
+///
+/// Every `.wasm` actor imports the kernel syscalls and exports `on-interrupt`.
+world sutra-actor {
+    /// Import all kernel syscalls.
+    import syscalls;
+
+    /// Entry point: called when a matching Nimitta trigger fires.
+    /// Returns a Nyāya commit proof or an error string.
+    export on-interrupt: func(event-payload-json: string) -> result<nyaya-proof, string>;
+}

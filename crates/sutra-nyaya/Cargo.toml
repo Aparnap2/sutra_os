@@ -1,0 +1,14 @@
+[package]
+name    = "sutra-nyaya"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Catuṣkoṭi 4-valued epistemic logic, Navya-Nyāya proof verifier, Piṅgala & Kuṭṭaka mathematics"
+
+[dependencies]
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+sha2        = { workspace = true }
+hex         = { workspace = true }
+tracing     = { workspace = true }

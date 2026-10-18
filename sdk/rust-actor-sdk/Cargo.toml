@@ -1,0 +1,10 @@
+[package]
+name    = "rust-actor-sdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "no_std SDK for compiling SūtraOS .wasm DevOps actors"
+
+[dependencies]
+serde       = { version = "1.0", features = ["derive"], default-features = false }
+serde_json  = { version = "1.0", default-features = false, features = ["alloc"] }

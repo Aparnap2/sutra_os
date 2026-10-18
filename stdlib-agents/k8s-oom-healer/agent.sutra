@@ -1,0 +1,42 @@
+name            = "k8s-oom-healer"
+version         = "0.1.0"
+actor_wasm_path = "actor.wasm"
+nigamana_cmd    = "kubectl get pod auth-service --no-headers | awk '{print $3}' | grep -q Running"
+
+# Nimitta (wakeup triggers)
+[[nimitta]]
+kind       = "prometheus_alert"
+alert_name = "KubePodOOMKilling"
+
+[[nimitta]]
+kind         = "log_pattern"
+regex        = "oom_kill_process|Killed process"
+unit         = "kubelet"
+
+# Adhikāra (VFS path permissions)
+[[adhikara]]
+path_glob = "/ontology/nodes/k8s/**"
+read      = true
+write     = false
+
+[[adhikara]]
+path_glob = "/ontology/nodes/aws-**"
+read      = true
+write     = false
+
+[[adhikara]]
+path_glob = "/incidents/**"
+read      = true
+write     = true
+
+[[adhikara]]
+path_glob = "/runbooks/**"
+read      = true
+write     = false
+
+# FinOps budget per frame
+[finops]
+max_input_tokens  = 8192
+max_output_tokens = 2048
+max_millicents    = 500
+max_wasm_fuel     = 2_000_000_000

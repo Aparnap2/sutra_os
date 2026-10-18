@@ -1,0 +1,28 @@
+name            = "pg-lock-surgeon"
+version         = "0.1.0"
+actor_wasm_path = "actor.wasm"
+nigamana_cmd    = "psql $PHANTOM_PG_DSN -c 'SELECT count(*) FROM pg_locks WHERE NOT granted' | grep -q ' 0'"
+
+[[nimitta]]
+kind       = "prometheus_alert"
+alert_name = "PostgreSQLDeadlockDetected"
+
+[[nimitta]]
+kind       = "prometheus_alert"
+alert_name = "PostgreSQLSlowQuery"
+
+[[adhikara]]
+path_glob = "/ontology/nodes/pg-**"
+read      = true
+write     = true
+
+[[adhikara]]
+path_glob = "/incidents/**"
+read      = true
+write     = true
+
+[finops]
+max_input_tokens  = 8192
+max_output_tokens = 2048
+max_millicents    = 300
+max_wasm_fuel     = 1_000_000_000

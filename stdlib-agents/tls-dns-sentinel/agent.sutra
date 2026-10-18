@@ -1,0 +1,28 @@
+name            = "tls-dns-sentinel"
+version         = "0.1.0"
+actor_wasm_path = "actor.wasm"
+nigamana_cmd    = "openssl s_client -connect api.example.com:443 -servername api.example.com < /dev/null 2>&1 | grep -q 'Verify return code: 0'"
+
+[[nimitta]]
+kind       = "prometheus_alert"
+alert_name = "TLSCertificateExpiringSoon"
+
+[[nimitta]]
+kind       = "cron"
+expression = "0 */6 * * *"
+
+[[adhikara]]
+path_glob = "/ontology/nodes/tls-**"
+read      = true
+write     = true
+
+[[adhikara]]
+path_glob = "/incidents/**"
+read      = true
+write     = true
+
+[finops]
+max_input_tokens  = 4096
+max_output_tokens = 1024
+max_millicents    = 100
+max_wasm_fuel     = 500_000_000

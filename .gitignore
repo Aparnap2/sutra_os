@@ -1,0 +1,10 @@
+/target
+**/*.wasm
+**/*.wat
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+sutra_state.git/
+*.log

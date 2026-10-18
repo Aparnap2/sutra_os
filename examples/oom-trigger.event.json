@@ -1,0 +1,16 @@
+{
+  "id": "01JWKAB3CX8MAYBZR6YQPVSN01",
+  "target_node_id": "auth-service",
+  "kind": {
+    "kind": "prometheus_alert",
+    "alert_name": "KubePodOOMKilling",
+    "labels": {
+      "namespace": "production",
+      "pod": "auth-service-7d9f8b-xk2p9",
+      "container": "auth-service"
+    },
+    "value": 1.0
+  },
+  "timestamp": "2026-10-18T04:30:00Z",
+  "evidence_sha": "abc123def456789012345678901234567890abcd"
+}
